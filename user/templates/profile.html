@@ -1,25 +1,51 @@
-{% extends 'base.html' %} {# extends ბლოკი არ იხურება}
+{% extends 'base.html' %}
 {% load crispy_forms_filters %}
-{% block title %}Register user{%endblock%}
+{% block title %}Profile{%endblock%}
 
 {% block content %}
-    <h1>your profile</h1>
+    <h1>Your Profile</h1>
     <div class="container">
+        <h3>User Information</h3>
         <ul>
-            <li>Name: {{ user }}</li>
-            <li>gender: {{ profile.gender }}</li>
-            <li>phone: {{ profile.phone }}</li>
-            <li>Address: {{ profile.address }}</li>
+            <li><strong>Name:</strong> {{ user }}</li>
+            <li><strong>Gender:</strong> {{ profile.gender }}</li>
+            <li><strong>Phone:</strong> {{ profile.phone }}</li>
+            <li><strong>Address:</strong> {{ profile.address }}</li>
         </ul>
     </div>
     <hr>
     <br>
-    <h2>Order History: </h2>
+    <h2>Order History</h2>
+    {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.created_at|date:"F d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'user:order_detail' order.id %}" class="btn btn-sm btn-info">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>You have no orders yet. <a href="{% url 'restaurant:menu' %}">Browse our menu</a> to place your first order!</p>
+    {% endif %}
 
-
-    <h3>Total spending: </h3>
-
-
-
+    <hr>
+    <h3>Total Spending: ${{ total_spending|default:"0.00" }}</h3>
 
 {% endblock %}

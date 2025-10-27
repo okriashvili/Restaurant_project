@@ -4,93 +4,155 @@
 
 {% block content %}
 
-<div class="d-flex flex-column justify-content-end">
+    <div class="d-flex flex-column justify-content-end">
 
-    <!-- ფილტრაციის გვერდი -->
-    <div class="d-flex flex-row justify-content-start menu-filter bg-light">
-        <h4 class="align-self-center mb-5">filter:</h4>
-        <br>
-            <form method="GET" action="{% url 'restaurant:menu' %}">
-                <div class="label-filter align-items-start">
-                    <label for="spiciness">Spiciness:</label>
-                    <input type="range" id="spiciness" name="spiciness" min="0" max="4" value="{{ request.GET.spiciness}}" step="1">
-                    <span id="value">{{ request.GET.spiciness }}</span>
+        <!-- ფილტრაციის გვერდი -->
+        <div class="d-flex flex-row justify-content-start menu-filter bg-light">
+            <h4 class="align-self-center mb-5">filter:</h4>
+            <br>
+                <form method="GET" action="{% url 'restaurant:menu' %}">
+                    <div class="label-filter align-items-start">
+                        <label for="spiciness">Spiciness:</label>
+                        <input type="range" id="spiciness" name="spiciness" min="0" max="4" value="{{ request.GET.spiciness}}" step="1">
+                        <span id="value">{{ request.GET.spiciness }}</span>
+                    </div>
+
+
+
+                    <!-- ვეგეტარიანული -->
+                    <div class="label-filter">
+                        <label for="vegetarian">Vegetarian:</label>
+                        <select id="vegetarian" name="vegetarian">
+                            <option value="">All</option>
+                            <option value="yes" {% if request.GET.vegetarian == 'yes' %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if request.GET.vegetarian == 'no' %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+
+                    <!-- ლაქტოზის -->
+                    <div class="label-filter">
+                         <label for="gluten_free">Gluten-Free: <input id="gluten_free" type="checkbox" name="gluten_free" value="gluten_free"></label>
+
+                    </div>
+
+                    <div class>
+                        <button class="btn bg-primary w-75 mt-2 mb-2 ms-5" type="submit">Apply Filters</button>
+                        <a class="btn bg-secondary w-75 mt-2 mb-2 ms-5" href="{% url 'restaurant:menu' %}">Reset</a>
+                    </div>
+                </form>
+
+            <script>
+                document.getElementById('spiciness_min').addEventListener('input', function() {
+                    document.getElementById('min_value').textContent = this.value;
+                });
+                document.getElementById('spiciness_max').addEventListener('input', function() {
+                    document.getElementById('max_value').textContent = this.value;
+                });
+            </script>
+        </div>
+        <hr>
+
+
+
+        <!-- მენიუს ჩამონათვალი -->
+        <div class="row menu-list">
+            {% for dish_data in dishes_with_ratings %}
+                {% with dish=dish_data.dish %}
+                <div class="card col-md-4 mb-3 ms-3" style="width: 20rem;">
+                    <img src="{{ dish.image.url }}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ dish.name }}</h5>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <p class="card-text align-self-center">Price: ${{ dish.price }}</p>
+                        
+                        <!-- Rating Display -->
+                        <li class="list-group-item">
+                            <small class="text-muted">Rating: </small>
+                            {% if dish_data.average_rating %}
+                                <span class="text-warning" style="font-size: 14px;">
+                                    {% for i in "12345" %}
+                                        {% if i|add:"0" <= dish_data.average_rating|add:"0" %}
+                                            ★
+                                        {% else %}
+                                            ☆
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <small>({{ dish_data.average_rating }}/5 - {{ dish_data.total_ratings }} reviews)</small>
+                            {% else %}
+                                <small>No ratings yet</small>
+                            {% endif %}
+                        </li>
+                        
+                        <!-- User Rating Status -->
+                        {% if user.is_authenticated %}
+                            {% if dish_data.has_rated %}
+                                <li class="list-group-item">
+                                    <small class="text-success">✓ You rated: 
+                                        <span class="text-warning">
+                                            {% for i in "12345" %}
+                                                {% if i|add:"0" <= dish_data.user_rating %}
+                                                    ★
+                                                {% else %}
+                                                    ☆
+                                                {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                    </small>
+                                </li>
+                            {% else %}
+                                <!-- Quick Rating Form -->
+                                <li class="list-group-item">
+                                    <form method="post" action="{% url 'restaurant:rate_dish' dish.id %}" class="quick-rate-form">
+                                        {% csrf_token %}
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-muted me-2">Rate:</small>
+                                            <div class="star-rating-mini">
+                                                <input type="radio" name="rating" value="5" id="star5-{{ dish.id }}" style="display: none;">
+                                                <label for="star5-{{ dish.id }}" class="star-mini">★</label>
+                                                
+                                                <input type="radio" name="rating" value="4" id="star4-{{ dish.id }}" style="display: none;">
+                                                <label for="star4-{{ dish.id }}" class="star-mini">★</label>
+                                                
+                                                <input type="radio" name="rating" value="3" id="star3-{{ dish.id }}" style="display: none;">
+                                                <label for="star3-{{ dish.id }}" class="star-mini">★</label>
+                                                
+                                                <input type="radio" name="rating" value="2" id="star2-{{ dish.id }}" style="display: none;">
+                                                <label for="star2-{{ dish.id }}" class="star-mini">★</label>
+                                                
+                                                <input type="radio" name="rating" value="1" id="star1-{{ dish.id }}" style="display: none;">
+                                                <label for="star1-{{ dish.id }}" class="star-mini">★</label>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary ms-2">Submit</button>
+                                        </div>
+                                    </form>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="list-group-item">
+                                <small><a href="{% url 'user:login' %}">Login to rate</a></small>
+                            </li>
+                        {% endif %}
+                    </ul>
+                    <div class="card-body">
+                        <a href="{% url 'restaurant:dish' dish.id %}" class="btn btn-primary">View Dish</a>
+                        <a href="{% url 'restaurant:add_to_cart' dish.id %}" class="btn btn-success">Add to Cart</a>
+                    </div>
                 </div>
+                {% endwith %}
+            {% endfor%}
 
-
-
-                <!-- ვეგეტარიანული -->
-                <div class="label-filter">
-                    <label for="vegetarian">Vegetarian:</label>
-                    <select id="vegetarian" name="vegetarian">
-                        <option value="">All</option>
-                        <option value="yes" {% if request.GET.vegetarian == 'yes' %}selected{% endif %}>Yes</option>
-                        <option value="no" {% if request.GET.vegetarian == 'no' %}selected{% endif %}>No</option>
-                    </select>
-                </div>
-
-
-                <!-- ლაქტოზის -->
-                <div class="label-filter">
-                     <label for="gluten_free">Gluten-Free: <input id="gluten_free" type="checkbox" name="gluten_free" value="gluten_free"></label>
-
-                </div>
-
-                <div class>
-                    <button class="btn bg-primary w-75 mt-2 mb-2 ms-5" type="submit">Apply Filters</button>
-                    <a class="btn bg-secondary w-75 mt-2 mb-2 ms-5" href="{% url 'restaurant:menu' %}">Reset</a>
-                </div>
-            </form>
-
-        <script>
-            document.getElementById('spiciness_min').addEventListener('input', function() {
-                document.getElementById('min_value').textContent = this.value;
-            });
-            document.getElementById('spiciness_max').addEventListener('input', function() {
-                document.getElementById('max_value').textContent = this.value;
-            });
-        </script>
-    </div>
-    <hr>
-
-
-
-    <!-- მენიუს ჩამონათვალი -->
-    <div class="row menu-list">
-        {% for dish in all_dish %}
-            <div class="card col-md-4 mb-3 ms-3" style="width: 20rem;">
-                <img src="{{ dish.image.url }}" class="card-img-top" alt="...">
-                <div class="card-body">
-                <h5 class="card-title">{{ dish.name }}</h5>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <p class="card-text align-self-center">Price: ${{ dish.price }}</p>
-                    <li class="list-group-item">Rate the dish: {{ dish.rating }}</li>
-                </ul>
-                <div class="card-body">
-                    <a href="{% url 'restaurant:dish' dish.id %}" class="btn btn-primary">View Dish</a>
-                    <form method="post" class="btn">
-                        {% csrf_token %}
-                        <input type="hidden" name="dish_id" value="{{ dish.id }}">
-                        <button type="submit" class="btn btn-success h-25">Add to Cart</button>
-                    </form>
-
-                </div>
+            <div class="align-self-center div-h">
+                <h3>
+                    {% if not dishes_with_ratings %}
+                        <p>No dishes match the filters.</p>
+                    {% endif %}
+                </h3>
             </div>
-
-        {% endfor%}
-
-        <div class="align-self-center div-h">
-            <h3>
-                {% if all_dish %}
-                    {{pass}}
-                {% else %}
-                    <p>No dishes match the filters.</p>
-                {% endif %}
-            </h3>
         </div>
     </div>
-</div>
 
 
 
@@ -123,12 +185,35 @@
             <li class="page-item disabled"><a class="page-link">Last &raquo;</a></li>
           {% endif %}
       </ul>
-        {% if dish.available %}
-            <a href="{% url 'restaurant:order' %}">Add to Cart</a>
-        {% endif %}
-        <a href="{% url 'restaurant:order' %}">View Cart</a>
+
     </nav>
     {% endif %}
+
+<style>
+    .star-rating-mini {
+        display: flex;
+        flex-direction: row;
+        font-size: 16px;
+        line-height: 1;
+        gap: 2px;
+    }
+    .star-rating-mini input[type="radio"] {
+        display: none;
+    }
+    .star-rating-mini .star-mini {
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .star-rating-mini .star-mini:hover,
+    .star-rating-mini input[type="radio"]:checked + .star-mini,
+    .star-rating-mini input[type="radio"]:checked ~ .star-mini {
+        color: #ffc107;
+    }
+    .quick-rate-form {
+        margin: 0;
+    }
+</style>
 
 {% endblock %}
 

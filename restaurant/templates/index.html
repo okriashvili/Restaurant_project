@@ -52,16 +52,13 @@
             <img src="" class="card-img-top" alt="...">
             <div class="card-body">
             <h5 class="card-title">{{dish.name }}</h5>
-            <p class="card-text"> {{ dish.description }}</p>
             </div>
             <ul class="list-group list-group-flush">
-                <li class="list-group-item">{{ dish.category }}</li>
                 <li class="list-group-item">Price: {{ dish.price }}</li>
-                <li class="list-group-item">spiciness: {{ dish.spiciness }}</li>
                 <li class="list-group-item">Rate the dish: {{ dish.rating }}</li>
             </ul>
             <div class="card-body">
-                <a href="{% url 'restaurant:order' %}" class="btn btn-success">Add to card</a>
+                <a href="{% url 'restaurant:add_to_cart' dish.id %}" class="btn btn-success">Add to card</a>
                 <a href="{% url 'restaurant:dish' dish.id %}" class="btn btn-primary">Dish detail</a>
 
             </div>

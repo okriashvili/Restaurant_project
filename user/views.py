@@ -5,7 +5,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import CreateView, DetailView
+from django.shortcuts import render
 
+from restaurant.models import Order, OrderItem
 
 # from user.forms import CustomUserCreationForm
 from django.urls import reverse_lazy
@@ -38,13 +40,36 @@ class UserLogoutView(LoginRequiredMixin, LogoutView):
 
 
 
-class UserProfileView(DetailView):
+class UserProfileView(LoginRequiredMixin, DetailView):
     model = User
     template_name = 'profile.html'
     context_object_name = 'profile'
 
     def get_object(self):
         return self.request.user
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get all orders for the user
+        user_orders = Order.objects.filter(user=self.request.user).order_by('-created_at')
+        context['orders'] = user_orders
+        
+        # Calculate total spending (sum all orders regardless of status)
+        total_spending = sum(order.total_price for order in user_orders)
+        context['total_spending'] = total_spending
+        
+        return context
+
+
+class OrderDetailView(LoginRequiredMixin, DetailView):
+    model = Order
+    template_name = 'order_detail.html'
+    context_object_name = 'order'
+    pk_url_kwarg = 'order_id'
+
+    def get_queryset(self):
+        # Only allow users to see their own orders
+        return Order.objects.filter(user=self.request.user)
 
 
 

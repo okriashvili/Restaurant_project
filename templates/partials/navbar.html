@@ -13,7 +13,7 @@
           <a class="nav-link" href="{% url 'restaurant:menu' %}">Menu</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="">Order</a>
+          <a class="nav-link" href="{% url 'restaurant:cart' %}">Order</a>
         </li>
 
 
@@ -27,7 +27,7 @@
             </a>
             <ul class="dropdown-menu">
                 <li>
-                    <a class="dropdown-item" href="">Profile</a>
+                    <a class="dropdown-item" href="{% url 'user:profile' %}">Profile</a>
                 </li>
                 <li>
                     <form action="{% url 'user:logout' %}" method="post">

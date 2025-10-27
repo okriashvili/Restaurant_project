@@ -26,11 +26,103 @@
             {% endif %}
             </p>
 
-            <li class="list-group-item">Rate the dish: {{ dish.rating }}</li>
-
         </ul>
+        
+        <!-- Rating Section -->
         <div class="card-body">
-            <a href="#" class="btn btn-success">Add to card</a>
+            <h6 class="mb-2">Average Rating: 
+                <span class="text-warning">
+                    {% if average_rating %}
+                        {% for i in "12345" %}
+                            {% if i|add:"0" <= average_rating|add:"0" %}
+                                ★
+                            {% else %}
+                                ☆
+                            {% endif %}
+                        {% endfor %}
+                        ({{ average_rating }}/5) - {{ total_ratings }} ratings
+                    {% else %}
+                        No ratings yet
+                    {% endif %}
+                </span>
+            </h6>
+            
+            {% if user.is_authenticated %}
+                {% if has_rated %}
+                    <div class="alert alert-info">
+                        <strong>You rated this dish:</strong> 
+                        <span class="text-warning">
+                            {% for i in "12345" %}
+                                {% if i|add:"0" <= user_rating %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                {% else %}
+                    <form method="post" action="{% url 'restaurant:rate_dish' dish.id %}" id="ratingForm">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <label class="form-label"><strong>Rate this dish:</strong></label>
+                            <div class="d-flex align-items-center">
+                                <div class="star-rating">
+                                    <input type="radio" name="rating" value="1" id="star1" style="display: none;">
+                                    <label for="star1" class="star">★</label>
+                                    
+                                    <input type="radio" name="rating" value="2" id="star2" style="display: none;">
+                                    <label for="star2" class="star">★</label>
+                                    
+                                    <input type="radio" name="rating" value="3" id="star3" style="display: none;">
+                                    <label for="star3" class="star">★</label>
+                                    
+                                    <input type="radio" name="rating" value="4" id="star4" style="display: none;">
+                                    <label for="star4" class="star">★</label>
+                                    
+                                    <input type="radio" name="rating" value="5" id="star5" style="display: none;">
+                                    <label for="star5" class="star">★</label>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary ms-2">Submit Rating</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <style>
+                        .star-rating {
+                            display: flex;
+                            flex-direction: row;
+                            font-size: 30px;
+                            line-height: 1;
+                            gap: 5px;
+                        }
+                        .star-rating input[type="radio"] {
+                            display: none;
+                        }
+                        .star-rating label {
+                            color: #ddd;
+                            cursor: pointer;
+                            transition: color 0.2s;
+                            order: inherit;
+                        }
+                        .star-rating label:hover,
+                        .star-rating input[type="radio"]:checked + label,
+                        .star-rating input[type="radio"]:checked ~ label {
+                            color: #ffc107;
+                        }
+                        .star-rating input[type="radio"]:checked + label {
+                            color: #ffc107 !important;
+                        }
+                    </style>
+                {% endif %}
+            {% else %}
+                <p class="text-muted"><a href="{% url 'user:login' %}">Login</a> to rate this dish</p>
+            {% endif %}
+        </div>
+        
+        <div class="card-body">
+            <a href="{% url 'restaurant:add_to_cart' dish.id %}" class="btn btn-success">Add to Cart</a>
+            <a href="{% url 'restaurant:menu' %}" class="btn btn-secondary">Back to Menu</a>
         </div>
     </div>
 </div>
