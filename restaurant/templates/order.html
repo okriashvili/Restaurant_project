@@ -1,0 +1,51 @@
+{% extends 'base.html' %} {# extends ბლოკი არ იხურება}
+{% block title %}Dish Detail{%endblock%}
+
+
+{% block content %}
+    <h1>Your Cart</h1>
+    {% if items %}
+        {% for item in items %}
+            <div>
+                <h2>{{ item.dish.name }}</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <label>Quantity: <input type="number" name="quantity" value="{{ item.quantity }}" min="1"></label>
+                    <button type="submit" name="action" value="update">Update</button>
+                    <button type="submit" name="action" value="delete">Remove</button>
+                </form>
+                <p>Subtotal: ${{ item.total }}</p>
+            </div>
+        {% endfor %}
+        <h3>Total: ${{ total }}</h3>
+        <a href="">Place Order</a>
+    {% else %}
+        <p>Your cart is empty.</p>
+    {% endif %}
+    <a href="{% url 'restaurant:menu' %}">Back to Menu</a>
+
+
+
+
+    <h1>Place Order</h1>
+    {% if items %}
+        <ul>
+            {% for item in items %}
+                <li>{{ item.quantity }} x {{ item.dish.name }} - ${{ item.total }}</li>
+            {% endfor %}
+        </ul>
+        <p>Total: ${{ total }}</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit">Confirm Order</button>
+        </form>
+    {% else %}
+        <p>Your cart is empty.</p>
+    {% endif %}
+    <a href="{% url 'restaurant:order' %}">Back to Cart</a>
+
+
+{% endblock %}
+
+

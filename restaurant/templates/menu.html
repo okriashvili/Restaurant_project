@@ -1,0 +1,148 @@
+{% extends 'base.html' %} {# extends ბლოკი არ იხურება}
+{% block title %}Menu{%endblock%}
+
+
+{% block content %}
+
+<div class="d-flex flex-column justify-content-end">
+
+    <!-- ფილტრაციის გვერდი -->
+    <div class="d-flex flex-row justify-content-start menu-filter bg-light">
+        <h4 class="align-self-center mb-5">filter:</h4>
+        <br>
+            <form method="GET" action="{% url 'restaurant:menu' %}">
+                <div class="label-filter align-items-start">
+                    <label for="spiciness">Spiciness:</label>
+                    <input type="range" id="spiciness" name="spiciness" min="0" max="4" value="{{ request.GET.spiciness}}" step="1">
+                    <span id="value">{{ request.GET.spiciness }}</span>
+                </div>
+
+
+
+                <!-- ვეგეტარიანული -->
+                <div class="label-filter">
+                    <label for="vegetarian">Vegetarian:</label>
+                    <select id="vegetarian" name="vegetarian">
+                        <option value="">All</option>
+                        <option value="yes" {% if request.GET.vegetarian == 'yes' %}selected{% endif %}>Yes</option>
+                        <option value="no" {% if request.GET.vegetarian == 'no' %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+
+
+                <!-- ლაქტოზის -->
+                <div class="label-filter">
+                     <label for="gluten_free">Gluten-Free: <input id="gluten_free" type="checkbox" name="gluten_free" value="gluten_free"></label>
+
+                </div>
+
+                <div class>
+                    <button class="btn bg-primary w-75 mt-2 mb-2 ms-5" type="submit">Apply Filters</button>
+                    <a class="btn bg-secondary w-75 mt-2 mb-2 ms-5" href="{% url 'restaurant:menu' %}">Reset</a>
+                </div>
+            </form>
+
+        <script>
+            document.getElementById('spiciness_min').addEventListener('input', function() {
+                document.getElementById('min_value').textContent = this.value;
+            });
+            document.getElementById('spiciness_max').addEventListener('input', function() {
+                document.getElementById('max_value').textContent = this.value;
+            });
+        </script>
+    </div>
+    <hr>
+
+
+
+    <!-- მენიუს ჩამონათვალი -->
+    <div class="row menu-list">
+        {% for dish in all_dish %}
+            <div class="card col-md-4 mb-3 ms-3" style="width: 20rem;">
+                <img src="{{ dish.image.url }}" class="card-img-top" alt="...">
+                <div class="card-body">
+                <h5 class="card-title">{{ dish.name }}</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <p class="card-text align-self-center">Price: ${{ dish.price }}</p>
+                    <li class="list-group-item">Rate the dish: {{ dish.rating }}</li>
+                </ul>
+                <div class="card-body">
+                    <a href="{% url 'restaurant:dish' dish.id %}" class="btn btn-primary">View Dish</a>
+                    <form method="post" class="btn">
+                        {% csrf_token %}
+                        <input type="hidden" name="dish_id" value="{{ dish.id }}">
+                        <button type="submit" class="btn btn-success h-25">Add to Cart</button>
+                    </form>
+
+                </div>
+            </div>
+
+        {% endfor%}
+
+        <div class="align-self-center div-h">
+            <h3>
+                {% if all_dish %}
+                    {{pass}}
+                {% else %}
+                    <p>No dishes match the filters.</p>
+                {% endif %}
+            </h3>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- პაგინაციის გვერდი -->
+    {% if is_paginated %}
+    <nav aria-label="..." class="d-flex justify-content-center align-items-end">
+      <ul class="pagination">
+
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1" aria-label="Previous">&laquo; First</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Prev...</a></li>
+        {% else %}
+            <li class="page-item disabled"><a class="page-link">&laquo; First</a></li>
+            <li class="page-item disabled"><a class="page-link">Prev...</a></li>
+        {% endif %}
+
+        {% for page in paginator.page_range %}
+            {% if page == page_obj.number %}
+                <li class="page-item active"><a class="page-link" aria-current="page">{{ page }}</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" aria-current="page" href="?page={{ page }}">{{ page }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ paginator.num_pages }}" aria-label="Previous">Last &raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><a class="page-link">Next</a></li>
+            <li class="page-item disabled"><a class="page-link">Last &raquo;</a></li>
+          {% endif %}
+      </ul>
+        {% if dish.available %}
+            <a href="{% url 'restaurant:order' %}">Add to Cart</a>
+        {% endif %}
+        <a href="{% url 'restaurant:order' %}">View Cart</a>
+    </nav>
+    {% endif %}
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

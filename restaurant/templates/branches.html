@@ -1,0 +1,23 @@
+{% extends 'base.html' %} {# extends ბლოკი არ იხურება}
+{% block title %}Our branches{%endblock%}
+
+{% block content %}
+    <h2 class="mt-3">Our brnaches</h2>
+    <div class="d-flex w-75 justify-content-around">
+    {% for branch in restaurant_branch %}
+        <div class="card d-flex" style="width: 18rem;">
+          <img src="static/batumi_branch.jpg" class="card-img-top" alt="...">
+          <div class="card-body">
+            <h5 class="card-title">{{ branch.branch }}</h5>
+            <p class="card-text">{{ branch.address }}</p>
+            <p class="card-text">{{ branch.phone_number }}</p>
+            <a href="#" class="btn btn-primary">Check our menu</a>
+          </div>
+        </div>
+        {% endfor %}
+    </div>
+
+
+
+
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %} {# extends ბლოკი არ იხურება}
+{% load crispy_forms_filters %}
+{% block title %}Register user{%endblock%}
+
+{% block content %}
+    <h1>your profile</h1>
+    <div class="container">
+        <ul>
+            <li>Name: {{ user }}</li>
+            <li>gender: {{ profile.gender }}</li>
+            <li>phone: {{ profile.phone }}</li>
+            <li>Address: {{ profile.address }}</li>
+        </ul>
+    </div>
+    <hr>
+    <br>
+    <h2>Order History: </h2>
+
+
+    <h3>Total spending: </h3>
+
+
+
+
+{% endblock %}
