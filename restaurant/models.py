@@ -18,6 +18,7 @@ class Cart(models.Model):
         return sum(item.total for item in self.items.all())
 
 
+# კალათის პროდუქტის
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     dish = models.ForeignKey('Menu', on_delete=models.CASCADE)
@@ -163,7 +164,7 @@ class OrderItem(models.Model):
 
 
 
-
+# შეფასების
 class Rating(models.Model):
     RATING_CHOICES = [
         (1, '1 Star'),

@@ -1,12 +1,9 @@
 from django.urls import resolve
 from django.utils.deprecation import MiddlewareMixin
-
 from restaurant.models import Menu
 
 
 class DishCountMiddleware(MiddlewareMixin):
-
-
     def process_view(self, request, view_func, view_args, view_kwargs):
         resolver = resolve(request.path_info)
 

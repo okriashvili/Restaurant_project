@@ -18,7 +18,27 @@ from restaurant.models import Restaurant, Menu, Category, Order, OrderItem, Cart
 # მთავარი გვერდი
 class IndexView(TemplateView):
     template_name = 'index.html'
-    context_object_name = 'batumi_branch, tbilisi_branch'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        from django.db.models import Avg
+        dishes_with_ratings = Menu.objects.select_related('category').prefetch_related(
+            'ratings__user', 'branch'
+        ).annotate(
+            avg_rating=Avg('ratings__rating')
+        ).filter(avg_rating__isnull=False).order_by('-avg_rating')[:6]
+        context['highest_rated'] = dishes_with_ratings
+
+        # Most viewed dishes
+        most_viewed = Menu.objects.select_related('category').prefetch_related(
+            'ratings', 'branch'
+        ).order_by('-views')[:6]
+        context['most_viewed'] = most_viewed
+
+        context['restaurant_branch'] = Restaurant.objects.all()
+        
+        return context
 
 
 
@@ -31,7 +51,9 @@ class MenuListView(ListView):
     paginate_by = 9
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('category').prefetch_related(
+            'branch', 'ratings__user'
+        )
         # სერჩ ბარი
         search_query = self.request.GET.get('search')
         # სიცხარე
@@ -41,12 +63,20 @@ class MenuListView(ListView):
         # ლაქტოზა
         gluten_free_filter = self.request.GET.get('gluten_free')
 
-        # კატეგორიის მიხედვით
-        categories_filter = self.request.GET.get('categories')
+        # კატეგორიის მიხედვით (support both ?category= and ?categories=)
+        categories_filter = self.request.GET.get('category') or self.request.GET.get('categories')
 
 
         if search_query:
-            queryset = queryset.filter(Q(name__istartswith=search_query))
+            queryset = queryset.filter(Q(name__istartswith=search_query)|Q(name__icontains=search_query) )
+
+        if categories_filter:
+            try:
+                # Try by ID first
+                queryset = queryset.filter(category_id=int(categories_filter))
+            except (TypeError, ValueError):
+                # Fallback by name (case-insensitive)
+                queryset = queryset.filter(category__category_name__iexact=categories_filter)
 
         if spiciness_filter:
             try:
@@ -86,6 +116,9 @@ class MenuListView(ListView):
             })
         
         context['dishes_with_ratings'] = dishes_with_ratings
+        # Categories for filter buttons
+        context['categories'] = Category.objects.all().only('id', 'category_name')
+        context['selected_category'] = self.request.GET.get('category') or self.request.GET.get('categories') or ''
         return context
 
 
@@ -122,19 +155,17 @@ class SubmitRatingView(LoginRequiredMixin, View):
     def post(self, request, dish_id):
         dish = get_object_or_404(Menu, id=dish_id)
         
-        # Check if user has already rated this dish
+        # აქვს თუ არა შეფასებული
         if dish.user_has_rated(request.user):
-            messages.warning(request, 'You have already rated this dish!')
             return redirect('restaurant:dish', product_pk=dish_id)
-        
-        # Get and validate rating
+
+
+        # თუ არ აქვს ამ if ბლოკს აამუშავებს და შეაფასებს
         rating_value = request.POST.get('rating')
         if not rating_value:
-            messages.error(request, 'Please select a rating!')
             return redirect('restaurant:dish', product_pk=dish_id)
-        
+
         try:
-            # Create rating
             rating_obj = Rating.objects.create(
                 user=request.user,
                 dish=dish,
@@ -143,7 +174,7 @@ class SubmitRatingView(LoginRequiredMixin, View):
             messages.success(request, f'Thank you for rating {dish.name} with {rating_value} stars!')
         except Exception as e:
             messages.error(request, f'Error submitting rating: {str(e)}')
-        
+
         return redirect('restaurant:dish', product_pk=dish_id)
 
 
@@ -153,15 +184,11 @@ class OrderListView(LoginRequiredMixin, View):
     template_name = 'order.html'
     login_url = '/user/login/'
 
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            messages.warning(request, 'Please login to view your cart!')
-            return redirect(f'/user/login/?next={request.path}')
-        return super().dispatch(request, *args, **kwargs)
+
 
     def get(self, request):
         cart = get_or_create_cart(request)
-        cart_items = CartItem.objects.filter(cart=cart) if cart else []
+        cart_items = CartItem.objects.filter(cart=cart)
         total = sum(item.total for item in cart_items)
         
         context = {
@@ -184,12 +211,14 @@ def get_or_create_cart(request):
     return cart
 
 
+
+
+
 class AddToCartView(LoginRequiredMixin, View):
     login_url = '/user/login/'
     
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            messages.warning(request, 'Please login to add items to cart!')
             return redirect(f'/user/login/?next={request.path}')
         return super().dispatch(request, *args, **kwargs)
     
@@ -222,7 +251,6 @@ class RemoveFromCartView(LoginRequiredMixin, View):
     
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            messages.warning(request, 'Please login to manage your cart!')
             return redirect(f'/user/login/?next={request.path}')
         return super().dispatch(request, *args, **kwargs)
     
@@ -241,7 +269,6 @@ class UpdateCartView(LoginRequiredMixin, View):
     
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            messages.warning(request, 'Please login to manage your cart!')
             return redirect(f'/user/login/?next={request.path}')
         return super().dispatch(request, *args, **kwargs)
     
@@ -277,7 +304,7 @@ class ConfirmOrderView(LoginRequiredMixin, View):
             status='pending'
         )
         
-        # Transfer cart items to order items
+        # კალათაში გადმოაქ შეკვეთა
         for cart_item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -286,7 +313,7 @@ class ConfirmOrderView(LoginRequiredMixin, View):
                 price=cart_item.price
             )
         
-        # Clear the cart
+        # წაშლა
         cart_items.delete()
         
         messages.success(request, f'Order #{order.id} confirmed! Thank you for your order.')

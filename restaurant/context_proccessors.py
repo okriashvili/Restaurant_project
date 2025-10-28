@@ -1,4 +1,4 @@
-from restaurant.models import Restaurant, Category, Menu
+from restaurant.models import Restaurant, Category, Menu, Rating
 
 
 
@@ -6,17 +6,18 @@ def global_settings(request):
     restaurant_branch = Restaurant.objects.all()
     category = Category.objects.all()
     all_dish = Menu.objects.all().select_related('category',)
+    rate = Rating.objects.all().select_related('user')
 
 
     most_viewed = all_dish.order_by('views')[:6]
-    highest_rated = all_dish.order_by('rating')[:6]
+    highest_rated = rate.order_by('rating')[:6]
 
 
-    # spiciness = all_dish.get()
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['count'] = self.queryset.count()
+        context['count'] = self.queryset.count().select_related('category')
         return context
 
 

@@ -8,7 +8,19 @@
 
         <!-- ფილტრაციის გვერდი -->
         <div class="d-flex flex-row justify-content-start menu-filter bg-light">
-            <h4 class="align-self-center mb-5">filter:</h4>
+            <h4 class="align-self-center mb-5 me-3">filter:</h4>
+            
+            <!-- Category buttons -->
+            <div class="d-flex align-items-start gap-2 mt-2">
+                <a href="{% url 'restaurant:menu' %}"
+                   class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+                {% for cat in categories %}
+                    <a href="{% url 'restaurant:menu' %}?category={{ cat.id }}"
+                       class="btn btn-sm {% if selected_category|stringformat:'s' == cat.id|stringformat:'s' or selected_category == cat.category_name %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ cat.category_name }}
+                    </a>
+                {% endfor %}
+            </div>
             <br>
                 <form method="GET" action="{% url 'restaurant:menu' %}">
                     <div class="label-filter align-items-start">
@@ -86,7 +98,7 @@
                             {% endif %}
                         </li>
                         
-                        <!-- User Rating Status -->
+                        <!-- აქვს თუ არა მომხმარებელს შეფასებული -->
                         {% if user.is_authenticated %}
                             {% if dish_data.has_rated %}
                                 <li class="list-group-item">
@@ -103,7 +115,9 @@
                                     </small>
                                 </li>
                             {% else %}
-                                <!-- Quick Rating Form -->
+
+
+                                <!-- შეფასების დასატოვებლად-->
                                 <li class="list-group-item">
                                     <form method="post" action="{% url 'restaurant:rate_dish' dish.id %}" class="quick-rate-form">
                                         {% csrf_token %}
